@@ -23,7 +23,7 @@ class CSVTransferApp:
     def show_about_popup(self):
         popup = tk.Toplevel()
         popup.title("About")
-        popup.geometry("500x250")
+        popup.geometry("500x220")
         popup.resizable(False, False)
         popup.grab_set()
         popup.transient()
@@ -31,10 +31,10 @@ class CSVTransferApp:
         label = tk.Label(
             popup,
             text=(
-                "I made this program to make transferring data at the end of the day a lot easier, "
-                "or at the very least more effective.\n\n"
-                "If you have any questions, comments, or concerns regarding this program, "
-                "please email me at jsaldana92@gmail.com"
+                "This tool was designed as an attempt to simplify and streamline end-of-day data transfers.\n\n"
+                "Questions or feedback?\n"
+                "Please contact: jsaldana92@gmail.com\n"
+                "Repo: https://github.com/jsaldana92/LRCdatapuller"
             ),
             wraplength=460,
             justify="center",
@@ -44,38 +44,40 @@ class CSVTransferApp:
         )
         label.pack()
 
-
+        tk.Button(popup, text="OK", command=popup.destroy).pack(pady=(0, 20))
         popup.wait_window()
 
     def show_help_popup(self):
         popup = tk.Toplevel()
         popup.title("Help")
-        popup.geometry("600x500")
+        popup.geometry("600x520")
         popup.resizable(False, False)
         popup.grab_set()
         popup.transient()
 
+        help_text = (
+            "File Locations:\n"
+            "- Your files must be located in: C:/Tasks/[last name]/[program name]/\n"
+            "- Your USB drive must be plugged into D:/\n"
+            "- Transferred files go to: D:/data_from_puller (auto-created if missing)\n\n"
+
+            "File Rules:\n"
+            "- .csv files: Always transferred\n"
+            "- .txt files: Transferred unless name starts with 'para' (e.g., 'parameters.txt' is ignored)\n\n"
+
+            "Optional Filters for .txt files:\n"
+            "- Exclude files starting with 'monkey' or 'block'\n"
+            "- Add a custom prefix to exclude other files (e.g., 'test')\n\n"
+
+            "Move Option:\n"
+            "- If enabled, transferred files will be moved to:\n"
+            "  C:/Tasks/[last name]/[program name]/copied/\n"
+            "- Folder is created automatically if it doesn’t exist"
+        )
+
         label = tk.Label(
             popup,
-            text=(
-                "The file structure for datapuller.exe requires your files to be located inside this address for your program:\n"
-                '"C:/Tasks/[your last name]/[your program name]".\n\n'
-                "Also, your USB drive needs to be in the D:/ drive. Files transferred will be inside your USB drive "
-                'in a folder called "data_from_puller": "D:/data_from_puller". If you do not have this folder, the program will create it for you.\n\n'
-                "Files ending in a .csv handle will be transferred with no exceptions.\n\n"
-                "Files ending in a .txt handle will be transferred as long as they do not have the string \"para\" at the beginning of their name. "
-                "This is to prevent the commonly used \"parameters.txt\" file from being accidentally transferred into your D:/ drive. "
-                "For example, \"parasailing-monkeyV1.txt\" will not be transferred, but \"1-parameters.txt\" will be pulled. "
-                "Make sure to have your programs create/use appropriately named .txt files to prevent accidental transferring. "
-                "This is always set to on by default and cannot be turned off.\n\n"
-                "Additionally, you can select to ignore any .txt files beginning with the strings \"monkey\" and/or \"block\". "
-                "These are optional settings and are not turned on by default. If you wish, you can also enter a custom string value into the text box, "
-                "which will have the program ignore any .txt files that begin with that string.\n\n"
-                "If you select the \"Move copied files into copied folder\" option, all data found that matches your settings will be sent to your USB, "
-                "but it will also be cut and pasted into a \"copied\" folder within your program folder. Move data can be found here:\n"
-                '"C:/Tasks/[your last name]/[program name]/copied/".\n\n'
-                "If this folder does not exist, the program will create one and place your data there."
-            ),
+            text=help_text,
             wraplength=560,
             justify="left",
             font=("Arial", 11),
@@ -84,10 +86,8 @@ class CSVTransferApp:
         )
         label.pack()
 
-
+        tk.Button(popup, text="OK", command=popup.destroy).pack(pady=(0, 20))
         popup.wait_window()
-
-
 
     def show_no_files_popup(self):
         popup = tk.Toplevel()
@@ -248,12 +248,37 @@ class CSVTransferApp:
         full_path = os.path.join(TASKS_ROOT, folder_name)
 
         subfolders = [f for f in os.listdir(full_path) if os.path.isdir(os.path.join(full_path, f))]
-        for subfolder in subfolders:
-            subfolder_path = os.path.join(full_path, subfolder)
-            var = BooleanVar()
-            cb = Checkbutton(self.checkbox_frame, text=subfolder, variable=var, anchor="w", width=60)
-            cb.pack(anchor="w")
-            self.selected_subfolders[subfolder_path] = var
+        subfolders.sort()  # Optional: sort alphabetically
+
+        max_per_column = 10
+        total = len(subfolders)
+        columns_needed = (total + max_per_column - 1) // max_per_column
+
+        if columns_needed == 1:
+            # Only one column → use pack for left alignment
+            col_frame = tk.Frame(self.checkbox_frame)
+            col_frame.pack(anchor="w", padx=10)
+            for subfolder in subfolders:
+                subfolder_path = os.path.join(full_path, subfolder)
+                var = BooleanVar()
+                cb = Checkbutton(col_frame, text=subfolder, variable=var, anchor="w", width=60)
+                cb.pack(anchor="w")
+                self.selected_subfolders[subfolder_path] = var
+        else:
+            # Multiple columns → use grid layout
+            for col in range(columns_needed):
+                col_frame = tk.Frame(self.checkbox_frame)
+                col_frame.grid(row=0, column=col, padx=10, sticky="nw")
+                for row in range(max_per_column):
+                    index = col * max_per_column + row
+                    if index >= total:
+                        break
+                    subfolder = subfolders[index]
+                    subfolder_path = os.path.join(full_path, subfolder)
+                    var = BooleanVar()
+                    cb = Checkbutton(col_frame, text=subfolder, variable=var, anchor="w", width=25)
+                    cb.grid(row=row, sticky="w")
+                    self.selected_subfolders[subfolder_path] = var
 
     def play_sound(self, sound_file):
         try:
