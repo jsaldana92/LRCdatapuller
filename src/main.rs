@@ -106,7 +106,7 @@ impl eframe::App for CsvTransferApp {
                 .default_height(300.0)
                 .show(ctx, |ui| {
                     ui.vertical_centered(|ui| {
-                        ui.label("Missing C:/Tasks/ directory\n\nPlease make sure the Tasks folder is in the correct location and not in /Documents/ or /Desktop/");
+                        ui.label("Missing C:\\Tasks\\ directory\n\nPlease make sure the Tasks folder is in the correct location and not in \\Documents\\ or \\Desktop\\");
                         ui.add_space(20.0);
                         if ui.button("Refresh").clicked() {
                             if Path::new(&self.tasks_root).exists() {
@@ -123,7 +123,7 @@ impl eframe::App for CsvTransferApp {
             ui.heading("File Copier");
 
             if let Ok(entries) = fs::read_dir(&self.tasks_root) {
-                ui.label("Select a folder in C:\\Tasks\\:");
+                ui.label("Select a folder in C:\\Tasks:");
                 let mut folders: Vec<String> = entries
                     .flatten()
                     .filter_map(|entry| {
@@ -218,15 +218,33 @@ impl eframe::App for CsvTransferApp {
 
             ui.vertical_centered(|ui| {
                 if ui.button("Copy Selected Files to D:\\data_from_puller").clicked() {
-                    if !Path::new("D:/").exists() {
-                        self.result_message = Some("No D:/ detected.\nPlease insert a usb drive".to_string());
+                    if !Path::new("D:\\").exists() {
+                        self.result_message = Some("No D:\\ detected.\nPlease insert a usb drive".to_string());
                         self.play_embedded_sound(SAD_TRUMPET_SOUND);
                         self.result_details.clear();
                     } else {
                         self.copy_selected_files();
                     }
                 }
+
+                ui.add_space(2.0); 
+
+                if ui.button("Safely Eject D:\\ and Close App").clicked() {
+                    std::process::Command::new("powershell")
+                        .args([
+                            "-Command",
+                            "& { $shell = New-Object -ComObject Shell.Application; \
+                            $drive = $shell.NameSpace(17).Items() | Where-Object { $_.Path -eq 'D:\\' }; \
+                            if ($drive) { $drive.InvokeVerb('Eject') } else { Write-Host 'D:/ not found in shell namespace' } }"
+                        ])
+                        .spawn()
+                        .expect("Failed to run PowerShell eject command");
+
+
+                    std::process::exit(0);
+                }
             });
+
 
             ui.with_layout(egui::Layout::bottom_up(egui::Align::RIGHT), |ui| {
                 ui.horizontal(|ui| {
@@ -246,9 +264,9 @@ impl eframe::App for CsvTransferApp {
                     .default_width(420.0)
                     .show(ctx, |ui| {
                         ui.label("File Locations:");
-                        ui.label("- Your files must be located in: C:/Tasks/[last name]/[program name]/");
-                        ui.label("- Your USB drive must be plugged into D:/");
-                        ui.label("- Transferred files go to: D:/data_from_puller/ (auto-created if missing)");
+                        ui.label("- Your files must be located in: C:\\Tasks\\[last name]\\[program name]\\");
+                        ui.label("- Your USB drive must be plugged into D:\\");
+                        ui.label("- Transferred files go to: D:\\data_from_puller\\ (auto-created if missing)");
                         ui.separator();
                         ui.label("File Rules:");
                         ui.label("- .csv files: Always transferred");
@@ -260,7 +278,7 @@ impl eframe::App for CsvTransferApp {
                         ui.separator();
                         ui.label("Move Option:");
                         ui.label("- If enabled, transferred files will be moved to:");
-                        ui.label("  C:/Tasks/[last name]/[program name]/copied/");
+                        ui.label("  C:\\Tasks\\[last name]\\[program name]\\copied\\");
                         ui.label("- Folder is created automatically if it doesn’t exist");
 
                         if ui.button("Close").clicked() {
@@ -279,7 +297,7 @@ impl eframe::App for CsvTransferApp {
                         ui.add_space(10.0);
                         ui.label("Questions or feedback?");
                         ui.label("Please contact: jsaldana92@gmail.com");
-                        ui.label("Repo: https://github.com/jsaldana92/LRCdatapuller");
+                        ui.label("Repo: https:\\github.com\\jsaldana92\\LRCdatapuller");
 
                         if ui.button("Close").clicked() {
                             self.show_about = false;
@@ -372,7 +390,7 @@ impl CsvTransferApp {
                             }
 
                             if should_copy {
-                                let dest_dir = Path::new("D:/data_from_puller");
+                                let dest_dir = Path::new("D:\\data_from_puller");
                                 let _ = fs::create_dir_all(dest_dir);
                                 let dest_path = dest_dir.join(entry.file_name());
                                 let _ = fs::copy(&path, &dest_path);
