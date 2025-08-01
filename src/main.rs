@@ -67,6 +67,9 @@ impl Default for CsvTransferApp {
             audio_handle: handle,
             sink: None,
 
+        }
+    }
+}
 
 impl CsvTransferApp {
     fn play_embedded_sound(&mut self, data: &'static [u8]) {
@@ -78,7 +81,6 @@ impl CsvTransferApp {
         }
     }
 }
-
 
 
 impl eframe::App for CsvTransferApp {
@@ -104,9 +106,7 @@ impl eframe::App for CsvTransferApp {
                 .default_height(300.0)
                 .show(ctx, |ui| {
                     ui.vertical_centered(|ui| {
-
                         ui.label("Missing C:\\Tasks\\ directory\n\nPlease make sure the Tasks folder is in the correct location and not in \\Documents\\ or \\Desktop\\");
-
                         ui.add_space(20.0);
                         if ui.button("Refresh").clicked() {
                             if Path::new(&self.tasks_root).exists() {
@@ -123,9 +123,7 @@ impl eframe::App for CsvTransferApp {
             ui.heading("File Copier");
 
             if let Ok(entries) = fs::read_dir(&self.tasks_root) {
-
                 ui.label("Select a folder in C:\\Tasks:");
-
                 let mut folders: Vec<String> = entries
                     .flatten()
                     .filter_map(|entry| {
@@ -220,10 +218,8 @@ impl eframe::App for CsvTransferApp {
 
             ui.vertical_centered(|ui| {
                 if ui.button("Copy Selected Files to D:\\data_from_puller").clicked() {
-
                     if !Path::new("D:\\").exists() {
                         self.result_message = Some("No D:\\ detected.\nPlease insert a usb drive".to_string());
-
                         self.play_embedded_sound(SAD_TRUMPET_SOUND);
                         self.result_details.clear();
                     } else {
@@ -264,7 +260,6 @@ impl eframe::App for CsvTransferApp {
             });
 
 
-
             ui.with_layout(egui::Layout::bottom_up(egui::Align::RIGHT), |ui| {
                 ui.horizontal(|ui| {
                     if ui.button("Help").clicked() {
@@ -283,11 +278,9 @@ impl eframe::App for CsvTransferApp {
                     .default_width(420.0)
                     .show(ctx, |ui| {
                         ui.label("File Locations:");
-
                         ui.label("- Your files must be located in: C:\\Tasks\\[last name]\\[program name]\\");
                         ui.label("- Your USB drive must be plugged into D:\\");
                         ui.label("- Transferred files go to: D:\\data_from_puller\\ (auto-created if missing)");
-
                         ui.separator();
                         ui.label("File Rules:");
                         ui.label("- .csv files: Always transferred");
@@ -299,9 +292,7 @@ impl eframe::App for CsvTransferApp {
                         ui.separator();
                         ui.label("Move Option:");
                         ui.label("- If enabled, transferred files will be moved to:");
-
                         ui.label("  C:\\Tasks\\[last name]\\[program name]\\copied\\");
-
                         ui.label("- Folder is created automatically if it doesn’t exist");
                         ui.label("- 'Only Copy Files from \"copied\" Folder': copies all files inside each selected subfolder's 'copied' directory to D:\\data_from_puller.");
 
@@ -321,9 +312,7 @@ impl eframe::App for CsvTransferApp {
                         ui.add_space(10.0);
                         ui.label("Questions or feedback?");
                         ui.label("Please contact: jsaldana92@gmail.com");
-
                         ui.label("Repo: https:\\github.com\\jsaldana92\\LRCdatapuller");
-
 
                         if ui.button("Close").clicked() {
                             self.show_about = false;
