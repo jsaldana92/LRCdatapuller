@@ -231,7 +231,23 @@ impl eframe::App for CsvTransferApp {
                     }
                 }
 
-                ui.add_space(2.0); 
+
+                ui.add_space(4.0); 
+
+                if ui.button("Only Copy Files from 'copied' Folder").clicked() {
+                    if !Path::new("D:\\").exists() {
+                        self.result_message = Some("No D:\\ detected.\nPlease insert a usb drive".to_string());
+                        self.play_embedded_sound(SAD_TRUMPET_SOUND);
+                        self.result_details.clear();
+                    } else {
+                        self.copy_from_copied_folder();
+                    }
+                }
+
+                ui.add_space(4.0); // small separation
+                
+
+
 
                 if ui.button("Safely Eject D:\\ and Close App").clicked() {
                     std::process::Command::new("powershell")
@@ -289,6 +305,7 @@ impl eframe::App for CsvTransferApp {
                         ui.label("  C:\\Tasks\\[last name]\\[program name]\\copied\\");
 
                         ui.label("- Folder is created automatically if it doesn’t exist");
+                        ui.label("- 'Only Copy Files from \"copied\" Folder': copies all files inside each selected subfolder's 'copied' directory to D:\\data_from_puller.");
 
                         if ui.button("Close").clicked() {
                             self.show_help = false;
@@ -435,6 +452,51 @@ impl CsvTransferApp {
             format!("Copied {} file(s).", copied_count)
         });
     }
+
+    fn copy_from_copied_folder(&mut self) {
+    let mut copied_count = 0;
+    let mut no_subfolders_selected = true;
+    self.result_details.clear();
+
+    if let Some(folder) = &self.selected_folder {
+        let base_path = Path::new(&self.tasks_root).join(folder);
+        for (subfolder, checked) in &self.subfolder_checkboxes {
+            if *checked {
+                no_subfolders_selected = false;
+                let copied_dir = base_path.join(subfolder).join("copied");
+                if let Ok(files) = fs::read_dir(&copied_dir) {
+                    for entry in files.flatten() {
+                        let path = entry.path();
+                        if path.is_file() {
+                            let dest_dir = Path::new("D:\\data_from_puller");
+                            let _ = fs::create_dir_all(dest_dir);
+                            let dest_path = dest_dir.join(entry.file_name());
+                            let _ = fs::copy(&path, &dest_path);
+                            copied_count += 1;
+                            self.result_details.push(format!(
+                                "{} -> {}\n",
+                                path.to_string_lossy().replace("/", "\\"),
+                                dest_path.to_string_lossy().replace("/", "\\")
+                            ));
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    self.result_message = Some(if no_subfolders_selected {
+            self.play_embedded_sound(SAD_TRUMPET_SOUND);
+            "No subfolders selected.".to_string()
+        } else if copied_count == 0 {
+            self.play_embedded_sound(SAD_TRUMPET_SOUND);
+            "No files found in any 'copied' folder.".to_string()
+        } else {
+            self.play_embedded_sound(SUCCESS_SOUND);
+            format!("Copied {} file(s) from 'copied' folders.", copied_count)
+        });
+    }
+
 }
 
 fn main() -> eframe::Result<()> {
